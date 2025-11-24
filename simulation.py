@@ -10,6 +10,8 @@ import statistics
 from typing import Dict, List, Tuple, Set, Callable
 from graph_generator import GraphGenerator
 from coloring_algorithms import FirstFit, CBIP, FirstFitHeuristic
+from graph_generator import generate_multiple_graphs
+
 
 
 class SimulationRunner:
@@ -39,23 +41,32 @@ class SimulationRunner:
         # Generate or load graph
         if graph_file and os.path.exists(graph_file):
             vertices, edges, ordering = GraphGenerator.load_from_edges_format(graph_file)
+            edges = set(edges)
         else:
             gen = GraphGenerator(n, k, p, seed=seed)
-            gen.generate()
+            # gen.generate()
             vertices = gen.vertices
             edges = gen.edges
             ordering = gen.get_online_ordering()
+
+        neighbors_dict = {v: set() for v in vertices}
+        for u, v in edges:
+            neighbors_dict[u].add(v)
+            neighbors_dict[v].add(u)
         
         # Create neighbor function
+        # def get_neighbors(vertex: int, revealed: Set[int]) -> List[int]:
+        #     """Get neighbors of vertex that are in revealed set."""
+        #     neighbors = []
+        #     for edge in edges:
+        #         if vertex in edge:
+        #             other = edge[0] if edge[1] == vertex else edge[1]
+        #             if other in revealed:
+        #                 neighbors.append(other)
+        #     return neighbors
+
         def get_neighbors(vertex: int, revealed: Set[int]) -> List[int]:
-            """Get neighbors of vertex that are in revealed set."""
-            neighbors = []
-            for edge in edges:
-                if vertex in edge:
-                    other = edge[0] if edge[1] == vertex else edge[1]
-                    if other in revealed:
-                        neighbors.append(other)
-            return neighbors
+            return [v for v in neighbors_dict[vertex] if v in revealed]
         
         # Run algorithm
         if algorithm_name == 'FirstFit':
@@ -64,7 +75,7 @@ class SimulationRunner:
             num_colors = algorithm.get_num_colors()
         
         elif algorithm_name == 'CBIP':
-            algorithm = CBIP(k)
+            algorithm = CBIP()
             coloring = algorithm.color_online_graph(ordering, get_neighbors)
             num_colors = algorithm.get_num_colors()
         
@@ -93,35 +104,19 @@ class SimulationRunner:
         return result
     
     def run_batch_experiments(self, n: int, k: int, p: float, N: int,
-                             algorithm_name: str, graph_files: List[str] = None,
-                             seed: int = None) -> Dict:
-        """
-        Run N experiments and calculate statistics.
-        
-        Args:
-            n: Number of vertices
-            k: Chromatic number
-            p: Edge probability
-            N: Number of graphs to test
-            algorithm_name: Name of algorithm
-            graph_files: Optional list of graph files to use
-            seed: Random seed
-        
-        Returns:
-            Dictionary with aggregated results
-        """
+                          algorithm_name: str, graph_files: List[str] = None,
+                          seed: int = None) -> Dict:
         competitive_ratios = []
         
         for i in range(N):
-            graph_file = graph_files[i] if graph_files else None
+            graph_file = graph_files[i] if graph_files and i < len(graph_files) else None
             current_seed = seed + i if seed is not None else None
             
             result = self.run_single_experiment(
-                n, k, p, algorithm_name, None, graph_file, current_seed
+                n, k, p, algorithm_name, graph_file=graph_file, seed=current_seed
             )
             competitive_ratios.append(result['competitive_ratio'])
         
-        # Calculate statistics
         avg_competitive_ratio = statistics.mean(competitive_ratios)
         std_dev = statistics.stdev(competitive_ratios) if len(competitive_ratios) > 1 else 0.0
         
@@ -134,6 +129,7 @@ class SimulationRunner:
             'std_dev': std_dev,
             'competitive_ratios': competitive_ratios
         }
+
     
     def run_full_simulation(self, n_values: List[int], k_values: List[int],
                            p: float, N: int, algorithm_name: str,
@@ -154,28 +150,23 @@ class SimulationRunner:
             List of result dictionaries
         """
         results = []
-        
+    
         for k in k_values:
             for n in n_values:
-                # Try to load existing graphs
                 graph_files = []
                 for i in range(N):
                     graph_file = os.path.join(
                         graph_dir, f"graph_n{n}_k{k}_p{p:.2f}_run{i+1}.edges"
                     )
-                    if os.path.exists(graph_file):
-                        graph_files.append(graph_file)
-                    else:
-                        graph_files.append(None)
+                    graph_files.append(graph_file if os.path.exists(graph_file) else None)
                 
-                # Run batch experiments
                 batch_result = self.run_batch_experiments(
                     n, k, p, N, algorithm_name, graph_files, seed
                 )
                 results.append(batch_result)
                 
                 print(f"Completed: {algorithm_name}, k={k}, n={n}, "
-                      f"avg_ρ={batch_result['avg_competitive_ratio']:.4f}")
+                    f"avg_ρ={batch_result['avg_competitive_ratio']:.4f}")
         
         return results
 
@@ -194,7 +185,6 @@ def generate_all_graphs(n_values: List[int], k_values: List[int],
         output_dir: Output directory
         seed: Random seed
     """
-    from graph_generator import generate_multiple_graphs
     
     for k in k_values:
         for n in n_values:

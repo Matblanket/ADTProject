@@ -10,9 +10,8 @@ This script:
 """
 
 import os
-from simulation import SimulationRunner, generate_all_graphs
+from simulation_runner import SimulationRunner
 from results_table import generate_results_table, generate_markdown_table, generate_latex_table
-
 
 def main():
     """Main execution function."""
@@ -35,17 +34,19 @@ def main():
     # Create output directory
     os.makedirs(graph_dir, exist_ok=True)
     
+    # Initialize simulation runner
+    runner = SimulationRunner()
+    
     # Step 1: Generate all graphs
     print("Step 1: Generating graphs...")
     print("-" * 60)
     all_k_values = list(set(k_values_firstfit + k_values_cbip))
-    generate_all_graphs(n_values, all_k_values, p, N, graph_dir, seed)
+    runner.generate_all_graphs(n_values, all_k_values, p, N, graph_dir, seed)
     print()
     
     # Step 2: Run FirstFit experiments
     print("Step 2: Running FirstFit experiments...")
     print("-" * 60)
-    runner = SimulationRunner()
     firstfit_results = runner.run_full_simulation(
         n_values, k_values_firstfit, p, N, 'FirstFit', graph_dir, seed
     )
