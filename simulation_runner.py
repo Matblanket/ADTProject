@@ -3,8 +3,6 @@ import statistics
 from typing import Dict, List, Set, Callable, Tuple
 from graph_generator import GraphGenerator
 from coloring_algorithms import FirstFit, CBIP, FirstFitHeuristic
-import networkx as nx
-import matplotlib.pyplot as plt
 from multiprocessing import Pool
 from collections import deque
 from tqdm import tqdm 
@@ -141,21 +139,6 @@ class SimulationRunner:
 
     def run_full_simulation(self, n_values: list, k_values: list, p: float, N: int,
                         algorithm_name: str, graph_dir: str, seed: int = None) -> list:
-        """
-        Run simulation for all combinations of n and k values.
-        
-        Args:
-            n_values: List of vertex counts
-            k_values: List of chromatic numbers
-            p: Edge probability
-            N: Number of graphs per configuration
-            algorithm_name: Name of coloring algorithm
-            graph_dir: Directory containing graph files
-            seed: Random seed
-            
-        Returns:
-            List of result dictionaries
-        """
         
         results = []
         
@@ -182,18 +165,4 @@ class SimulationRunner:
         
         return results
 
-    @staticmethod
-    def visualize_graph(vertices: List[int], edges: Set[Tuple[int, int]], coloring: Dict[int, int] = None):
-        """Visualize graph using NetworkX. Color nodes if coloring provided."""
-        G = nx.Graph()
-        G.add_nodes_from(vertices)
-        G.add_edges_from(edges)
-        pos = nx.spring_layout(G, seed=42)
-
-        if coloring:
-            node_colors = [coloring[v] for v in vertices]
-            nx.draw(G, pos, with_labels=True, node_color=node_colors, cmap=plt.cm.tab20, node_size=500)
-        else:
-            nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=500)
-
-        plt.show()
+    
