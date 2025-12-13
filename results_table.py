@@ -1,31 +1,15 @@
-"""
-Results Table Generator
-
-This module generates formatted tables for the project report.
-"""
-
 from typing import List, Dict
 import csv
 
 
 def generate_results_table(results: List[Dict], output_file: str = "results_table.csv"):
-    """
-    Generate a CSV table from simulation results.
-    
-    Args:
-        results: List of result dictionaries from SimulationRunner
-        output_file: Output CSV filename
-    """
     with open(output_file, 'w', newline='') as f:
         writer = csv.writer(f)
-        
-        # Header
         writer.writerow([
             'Algorithm', 'k', 'n', 'N', 
             'Average Competitive Ratio', 'Standard Deviation'
         ])
         
-        # Data rows
         for result in results:
             writer.writerow([
                 result['algorithm'],
@@ -40,13 +24,6 @@ def generate_results_table(results: List[Dict], output_file: str = "results_tabl
 
 
 def generate_markdown_table(results: List[Dict], output_file: str = "results_table.md"):
-    """
-    Generate a Markdown table from simulation results.
-    
-    Args:
-        results: List of result dictionaries from SimulationRunner
-        output_file: Output Markdown filename
-    """
     with open(output_file, 'w') as f:
         f.write("| Algorithm | k | n | N | Average Competitive Ratio | Standard Deviation |\n")
         f.write("|:--|--:|--:|--:|--:|--:|\n")
@@ -60,13 +37,6 @@ def generate_markdown_table(results: List[Dict], output_file: str = "results_tab
 
 
 def generate_latex_table(results: List[Dict], output_file: str = "results_table.tex"):
-    """
-    Generate a LaTeX table from simulation results.
-    
-    Args:
-        results: List of result dictionaries from SimulationRunner
-        output_file: Output LaTeX filename
-    """
     with open(output_file, 'w') as f:
         f.write("\\begin{table}[h]\n")
         f.write("\\centering\n")

@@ -9,8 +9,6 @@ from tqdm import tqdm
 from graph_generator import generate_multiple_graphs_parallel
 
 class SimulationRunner:
-    """Faster simulation runner with adjacency dicts and optional visualization."""
-    
     def __init__(self):
         self.results = []
         self.adjacency_cache: Dict[Tuple[int, int], Dict[int, Set[int]]] = {}
@@ -28,13 +26,11 @@ class SimulationRunner:
         return self.adjacency_cache[cache_key]
 
     def get_neighbors(self, vertex: int, revealed: Set[int], adj: Dict[int, Set[int]]) -> List[int]:
-        """Get neighbors of vertex that are already revealed."""
         return list(adj[vertex] & revealed)
 
     def color_single_graph(self, n: int, k: int, p: float,
                            algorithm_name: str, vertices: List[int],
                            edges: Set[Tuple[int, int]], ordering: List[int]) -> Dict:
-        """Color a single graph."""
         adj = self.build_adjacency_dict(vertices, edges)
 
         if algorithm_name == 'FirstFit':
@@ -63,8 +59,6 @@ class SimulationRunner:
 
     def run_single_experiment(self, n: int, k: int, p: float,
                               algorithm_name: str, graph_file: str = None, seed: int = None) -> Dict:
-        """Run single experiment with faster adjacency lookup."""
-        # Load or generate graph
         if graph_file and os.path.exists(graph_file):
             vertices, edges, ordering = GraphGenerator.load_from_edges_format(graph_file)
         else:
@@ -80,7 +74,6 @@ class SimulationRunner:
     def run_batch_experiments(self, n: int, k: int, p: float, N: int,
                               algorithm_name: str, graph_files: List[str] = None,
                               seed: int = None, parallel: bool = False) -> Dict:
-        """Run multiple experiments with optional parallel execution."""
         tasks = []
         for i in range(N):
             graph_file = graph_files[i] if graph_files else None
@@ -89,11 +82,9 @@ class SimulationRunner:
 
         if parallel:
             with Pool() as pool:
-                # Show progress bar for parallel execution
                 results = list(tqdm(pool.imap(self.run_single_experiment_unpack, tasks), 
                                 total=len(tasks), desc=f"n={n}, k={k}"))
         else:
-            # Show progress bar for sequential execution
             results = []
             for task in tqdm(tasks, desc=f"n={n}, k={k}"):
                 results.append(self.run_single_experiment(*task))
@@ -114,17 +105,6 @@ class SimulationRunner:
 
     def generate_all_graphs(self, n_values: list, k_values: list, p: float, N: int, 
                         output_dir: str, seed: int = None):
-        """
-        Generate graphs for all combinations of n and k values.
-        
-        Args:
-            n_values: List of vertex counts
-            k_values: List of chromatic numbers  
-            p: Edge probability
-            N: Number of graphs per configuration
-            output_dir: Output directory
-            seed: Random seed
-        """
         
         total_graphs = len(n_values) * len(k_values) * N
         graph_count = 0
@@ -139,6 +119,7 @@ class SimulationRunner:
 
     def run_full_simulation(self, n_values: list, k_values: list, p: float, N: int,
                         algorithm_name: str, graph_dir: str, seed: int = None) -> list:
+
         
         results = []
         
@@ -146,13 +127,11 @@ class SimulationRunner:
             for k in k_values:
                 print(f"  Running {algorithm_name} on n={n}, k={k}...")
                 
-                # Generate graph filenames for this configuration
                 graph_files = []
                 for i in range(N):
                     filename = f"graph_n{n}_k{k}_p{p:.2f}_run{i+1}.edges"
                     graph_files.append(os.path.join(graph_dir, filename))
                 
-                # Run batch experiments
                 batch_result = self.run_batch_experiments(
                     n=n, k=k, p=p, N=N, 
                     algorithm_name=algorithm_name,
@@ -160,7 +139,6 @@ class SimulationRunner:
                     seed=seed
                 )
                 results.append(batch_result)
-                
                 print(f"    Average competitive ratio: {batch_result['avg_competitive_ratio']:.4f}")
         
         return results

@@ -1,10 +1,3 @@
-"""
-Main Interactive Module for Online Graph Coloring Project
-
-This module provides an interactive interface for running simulations
-and handles ASCII encodings of online k-colourable graphs.
-"""
-
 import os
 import sys
 from typing import List, Set, Tuple, Dict
@@ -14,8 +7,6 @@ from simulation_runner import SimulationRunner
 
 
 class InteractiveSimulation:
-    """Interactive simulation runner with user input."""
-    
     def __init__(self):
         self.runner = SimulationRunner()
         self.graphs_dir = "user_graphs"
@@ -35,7 +26,6 @@ class InteractiveSimulation:
         print("-"*60)
     
     def get_user_input(self) -> Dict:
-        """Get user input for simulation parameters."""
         params = {}
         
         while True:
@@ -51,8 +41,6 @@ class InteractiveSimulation:
         
         if params['algorithm_choice'] == 4:
             return params
-        
-        # Get common parameters
         while True:
             try:
                 n = int(input("Enter number of vertices (n): "))
@@ -85,9 +73,7 @@ class InteractiveSimulation:
                     print("Probability must be between 0.0 and 1.0.")
             except ValueError:
                 print("Please enter a valid number.")
-        
-        # Algorithm-specific parameters
-        if params['algorithm_choice'] in [0, 2, 3]:  # FirstFit or Heuristic
+        if params['algorithm_choice'] in [0, 2, 3]:
             while True:
                 try:
                     k = int(input("Enter chromatic number (k): "))
@@ -98,41 +84,33 @@ class InteractiveSimulation:
                         print("Chromatic number must be at least 2.")
                 except ValueError:
                     print("Please enter a valid integer.")
-        else:  # CBIP - fixed at k=2
+        else:
             params['k'] = 2
             print("CBIP algorithm selected - using k=2 (bipartite graphs)")
         
         return params
     
     def run_single_simulation(self, params: Dict):
-        """Run a single simulation based on user parameters."""
         print(f"\nRunning simulation with parameters:")
         print(f"  Vertices (n): {params['n']}")
         print(f"  Chromatic number (k): {params['k']}")
         print(f"  Graph instances: {params['N']}")
         print(f"  Edge probability: {params['p']}")
-        
-        # Generate graphs
         print(f"\nGenerating {params['N']} graph instances...")
         graph_files = []
         for i in range(params['N']):
             filename = os.path.join(self.graphs_dir, f"user_graph_{params['n']}_{params['k']}_{i+1}.edges")
             graph_files.append(filename)
-            
-            # Generate and save graph with ASCII encoding
             gen = GraphGenerator(params['n'], params['k'], params['p'], seed=42 + i)
             ordering = gen.get_online_ordering()
             gen.save_to_edges_format(filename, ordering)
-            
-            # Display ASCII encoding info for first graph
             if i == 0:
                 print(f"\nSample ASCII Encoding (Graph 1):")
                 print(f"  File: {filename}")
                 print(f"  Format: EDGES format with vertex ordering")
                 print(f"  Vertex ordering: {ordering[:10]}{'...' if len(ordering) > 10 else ''}")
                 print(f"  Edge count: {len(gen.edges)}")
-        
-        # Determine which algorithms to run
+
         algorithms = []
         if params['algorithm_choice'] == 0:
             algorithms = ['FirstFit']
@@ -142,13 +120,9 @@ class InteractiveSimulation:
             algorithms = ['FirstFitHeuristic']
         elif params['algorithm_choice'] == 3:
             algorithms = ['FirstFit', 'CBIP', 'FirstFitHeuristic']
-        
-        # Run simulations
         results = []
         for algorithm in algorithms:
             print(f"\nRunning {algorithm} algorithm...")
-            
-            # For CBIP, ensure k=2
             current_k = params['k'] if algorithm != 'CBIP' else 2
             
             batch_result = self.runner.run_batch_experiments(
@@ -165,13 +139,11 @@ class InteractiveSimulation:
             print(f"  Average competitive ratio: {batch_result['avg_competitive_ratio']:.4f}")
             print(f"  Standard deviation: {batch_result['std_dev']:.4f}")
         
-        # Display results
         self.display_results(results, params)
         
         return results
     
     def display_results(self, results: List[Dict], params: Dict):
-        """Display simulation results in a formatted way."""
         print("\n" + "="*60)
         print("SIMULATION RESULTS")
         print("="*60)
@@ -184,12 +156,9 @@ class InteractiveSimulation:
             
     
     def run_benchmark_study(self):
-        """Run the predefined benchmark study from the project."""
         print("\n" + "="*60)
         print("RUNNING PROJECT BENCHMARK STUDY")
         print("="*60)
-        
-        # Project parameters
         n_values = [50, 100, 200, 400, 800, 1600]
         k_values_firstfit = [2, 3, 4]
         k_values_cbip = [2]
@@ -205,34 +174,28 @@ class InteractiveSimulation:
         print(f"  Graphs per configuration: {N}")
         print(f"  Total graphs: {len(n_values) * (len(k_values_firstfit) + len(k_values_cbip)) * N}")
         
-        # Generate all graphs
         print(f"\nGenerating benchmark graphs...")
         all_k_values = list(set(k_values_firstfit + k_values_cbip))
         self.runner.generate_all_graphs(n_values, all_k_values, p, N, graph_dir, seed)
         
-        # Run FirstFit experiments
         print(f"\nRunning FirstFit experiments...")
         firstfit_results = self.runner.run_full_simulation(
             n_values, k_values_firstfit, p, N, 'FirstFit', graph_dir, seed
         )
         
-        # Run CBIP experiments
         print(f"\nRunning CBIP experiments...")
         cbip_results = self.runner.run_full_simulation(
             n_values, k_values_cbip, p, N, 'CBIP', graph_dir, seed
         )
         
-        # Run FirstFitHeuristic experiments
         print(f"\nRunning FirstFitHeuristic experiments...")
         heuristic_results = self.runner.run_full_simulation(
             n_values, k_values_firstfit, p, N, 'FirstFitHeuristic', graph_dir, seed
         )
         
-        # Combine results
         all_results = firstfit_results + cbip_results + heuristic_results
         all_results.sort(key=lambda x: (x['algorithm'], x['k'], x['n']))
         
-        # Display summary
         print("\n" + "="*60)
         print("BENCHMARK STUDY SUMMARY")
         print("="*60)
@@ -292,19 +255,17 @@ Graphs are generated using the project specification algorithm:
                 print("Thank you for using the Online Graph Coloring Simulation!")
                 break
             
-            elif params['algorithm_choice'] == 5:  # Hidden option for benchmark
+            elif params['algorithm_choice'] == 5:  
                 self.run_benchmark_study()
             
             elif 'algorithm_choice' in params:
                 try:
                     self.run_single_simulation(params)
                     
-                    # Ask if user wants to see ASCII encoding info
                     show_info = input("\nShow ASCII encoding information? (y/n): ").strip().lower()
                     if show_info == 'y':
                         self.display_ascii_encoding_info()
                     
-                    # Ask if user wants to continue
                     continue_sim = input("\nRun another simulation? (y/n): ").strip().lower()
                     if continue_sim != 'y':
                         print("Thank you for using the Online Graph Coloring Simulation!")

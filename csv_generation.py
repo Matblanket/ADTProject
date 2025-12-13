@@ -5,10 +5,7 @@ from analysis import FunctionFittingAnalysis
 
 
 class CsvGeneration:
-    """Encapsulates the full execution workflow inside a class."""
-
     def __init__(self):
-        # Configuration parameters
         self.n_values = [50, 100, 200, 400, 800, 1600]
         self.k_values_firstfit = [2, 3, 4]
         self.k_values_cbip = [2]
@@ -16,24 +13,18 @@ class CsvGeneration:
         self.N = 100
         self.seed = 42
         self.graph_dir = "graphs"
-
-        # Initialize components
         self.runner = SimulationRunner()
         self.analyzer = FunctionFittingAnalysis()
 
-        # Make directory
         os.makedirs(self.graph_dir, exist_ok=True)
 
     def run(self):
-        """Main execution without visualization, now part of the class."""
-
         print("=" * 60)
         print("COMP 6651 Project: Online Graph Coloring")
         print("=" * 60)
         print(f"Parameters: p={self.p}, N={self.N}, seed={self.seed}")
         print()
 
-        # Step 1: Generate all graphs
         print("Step 1: Generating graphs...")
         all_k_values = list(set(self.k_values_firstfit + self.k_values_cbip))
         self.runner.generate_all_graphs(
@@ -46,7 +37,6 @@ class CsvGeneration:
         )
         print()
 
-        # Step 2: Running FirstFit experiments
         print("Step 2: Running FirstFit experiments...")
         firstfit_results = self.runner.run_full_simulation(
             self.n_values,
@@ -59,7 +49,6 @@ class CsvGeneration:
         )
         print()
 
-        # Step 3: Running CBIP experiments
         print("Step 3: Running CBIP experiments...")
         cbip_results = self.runner.run_full_simulation(
             self.n_values,
@@ -72,7 +61,6 @@ class CsvGeneration:
         )
         print()
 
-        # Step 4: Running FirstFitHeuristic experiments
         print("Step 4: Running FirstFitHeuristic experiments...")
         heuristic_results = self.runner.run_full_simulation(
             self.n_values,
@@ -85,20 +73,16 @@ class CsvGeneration:
         )
         print()
 
-        # Step 5: Generate results and analysis
         print("Step 5: Generating results and analysis...")
         all_results = firstfit_results + cbip_results + heuristic_results
-        # all_results = cbip_results + heuristic_results
 
 
         all_results.sort(key=lambda x: (x['algorithm'], x['k'], x['n']))
 
-        # Generate tables
         generate_results_table(all_results, "results_table.csv")
         generate_markdown_table(all_results, "results_table.md")
         generate_latex_table(all_results, "results_table.tex")
 
 
 if __name__ == "__main__":
-    # Create object and run everything
     CsvGeneration().run()
